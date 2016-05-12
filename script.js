@@ -7,7 +7,7 @@ var day = currentDate.getDate()
 var month = currentDate.getMonth() + 1
 var year = currentDate.getFullYear()
 
-  $('tomorrow').click(function(){
+  $(document).click(function(){
     $('tomorrow').append("<p>" + currentDate + "</p>");
   });
   
