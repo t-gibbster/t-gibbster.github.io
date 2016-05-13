@@ -1,15 +1,18 @@
 $(document).ready(function(){
   
-var xhr = new XMLHttpRequest();
+var x = function(result) {
+  
+  $('#cityInfo').append(result.gender)
+  
+};
 
-xhr.open("GET", "http://www.codecademy.com/", false);
-xhr.send();
+var y = $.get('https://api.genderize.io/?name=peter', x);
 
-console.log(xhr.status);
-console.log(xhr.statusText);
+var xhr2 = new XMLHttpRequest();
 
-$('#cityInfo').append(xhr.status, xhr.statusText)
+xhr2.open("GET", "https://api.meetup.com/find/locations?&sign=true&photo-host=public&query=94606", false);
+xhr2.send();
 
-
+$('#cityInfo').append(xhr2.status, xhr.statusText)
 
 });
