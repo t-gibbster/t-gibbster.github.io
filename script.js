@@ -8,7 +8,8 @@ xhr.send();
 console.log(xhr.status);
 console.log(xhr.statusText);
 
-$('cityInfo').append(xhr.status, xhr.statusText)
+$('#cityInfo').append(xhr.status, xhr.statusText)
+
 
 
 });
