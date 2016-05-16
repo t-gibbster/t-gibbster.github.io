@@ -3,7 +3,7 @@ $(document).ready(function(){
 
 var x = function(result) {
   
-  $('#cityInfo').append(result.gender)
+  $('#demo').append(result.gender)
   
 };
 
