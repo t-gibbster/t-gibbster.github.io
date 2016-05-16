@@ -1,5 +1,7 @@
 $(document).ready(function(){
-  
+
+
+alert("hello?")
 var x = function(result) {
   
   $('#cityInfo').append(result.gender)
