@@ -1,22 +1,23 @@
 <!DOCTYPE html>
 <html>
     <head>
-
-		<title>Highlights</title>
+	<title>Highlights</title>
         <link rel='stylesheet' type='text/css' href='stylesheet.css'/>
-        <script type="text/javascript" src='script.js'></script>
-
+        <script type="text/javascript" src='./js/main.js'></script>
 	</head>
 
-	<body class="body">
-	<p id="demo"></p>
+<body class="body">
 
-<ol id="list" type="1">
-  
-</ol>
+<center>
+	<div id="query">
+	<form id="searchField" onsubmit="return addtoQueryObject();">
+	  	Search Term: <input type="text" id="search_term" value="climate change">
+	</form>
+	<button id="submitQuery">Submit</button>
+	</div>
+</center>
 
-	</body>
+<div id="keywordBubble"></div>
 
-
-
+</body>
 </html>
