@@ -166,8 +166,5 @@ var removeChildren = function(elementId){
 					});
 				});			
 		};
-
-
-	
+	};
 };
-
