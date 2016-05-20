@@ -3,12 +3,13 @@ window.onload = function(){
 
 	//create a multi-purpose function for specifying different API calls
 	var param = function(obj) {
-		var str = ''
+		var str = '' 
 		for (i in obj){
 			str += "&" + i + "=" + obj[i]
-		};
+		}; 
 		return str;
 	};
+
 
 function call(){
 
@@ -81,6 +82,7 @@ var removeChildren = function(elementId){
 		var instancesGen = function(array){
 			var instancesObj = new Object();
 			for (var i = 0; i < array.length; i++){
+				// FIXME: You've got some gnarly curly brace / indentation issues right here.
 				if (instancesObj.hasOwnProperty(array[i])) {
 					instancesObj[array[i]] += 1;
 					}
@@ -92,16 +94,22 @@ var removeChildren = function(elementId){
 		};
 		
 
-		var keyword_array = articleObj.map(function(article) {return {web_url: article.web_url, 
 
-			headline: article.headline.main,
-
-			abstract: article.abstract,
-
-			keywords: article.keywords.filter(function(keyword) 
-			{return keyword.is_major == "Y"}).map(function(keyword) 
-				{return keyword.value})}
-			});
+		var keyword_array = articleObj.map(function(article) {
+			return {
+				web_url: article.web_url, 
+				headline: article.headline.main,
+				abstract: article.abstract,
+				keywords: article.keywords
+					.filter(function(keyword) {
+						return keyword.is_major == "Y";
+					})
+					.map(function(keyword) {
+						return keyword.value;
+					})
+			};
+		});
+	
 
 		//flatten function for multidimensional arrays; need to work on for more than 2d arrays
 		var flat = function(array){
