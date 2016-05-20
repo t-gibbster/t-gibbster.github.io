@@ -41,15 +41,19 @@ document.getElementById("submitQuery").addEventListener('click', function() {
 	call()
 });
 
+//clears HTML elements so new search can be implemented 
+var removeChildren = function(elementId){
+	var myNode = document.getElementById(elementId);
+	while (myNode.firstChild){
+		myNode.removeChild(myNode.firstChild)
+	};
+};
 
-
+//idea for iterating through API calls?
 // for (var i = 0; i < 10; i++){
 // 	queryObject['page'] = i;
 // 	call();
 // };
-
-
-
 
 	function nyTimes(articles){
 		var articleObj = articles.response.docs
@@ -72,12 +76,7 @@ document.getElementById("submitQuery").addEventListener('click', function() {
 		});
 
 		list_keywords.sort();
-		//console.log('This is list_keywords:' + list_keywords)
-
 		
-
-		//console.log(list_keywords.length)
-
 		//instancesGen returns a new Object from an array that tracks the number of instances each item in the array appears
 		var instancesGen = function(array){
 			var instancesObj = new Object();
@@ -93,7 +92,13 @@ document.getElementById("submitQuery").addEventListener('click', function() {
 		};
 		
 
-		var keyword_array = articleObj.map(function(article) {return {web_url: article.web_url, keywords: article.keywords.filter(function(keyword) 
+		var keyword_array = articleObj.map(function(article) {return {web_url: article.web_url, 
+
+			headline: article.headline.main,
+
+			abstract: article.abstract,
+
+			keywords: article.keywords.filter(function(keyword) 
 			{return keyword.is_major == "Y"}).map(function(keyword) 
 				{return keyword.value})}
 			});
@@ -112,72 +117,56 @@ document.getElementById("submitQuery").addEventListener('click', function() {
 
 		var keyword_instances = instancesGen(flat(keyword_array.map(function(prop) {return prop.keywords;})));
 
-		//console.log(keyword_array);
 		console.log(keyword_instances)
 		
+		//creates keyword bubbles from object 'keyword_instances'
 		var bubble = document.getElementById("keywordBubble");
+		removeChildren('keywordBubble');
+
 
 		for (var art in keyword_instances){
 			var keyDiv = document.createElement('div')
 			keyDiv.className = 'floatingKeyword';
+			keyDiv.id = art;
 			keyDiv.innerHTML = art;
+			keyDiv.style.width = String(keyword_instances[art]*10 + 50) + "px";
+			keyDiv.style.height = String(keyword_instances[art]*10 + 50) + "px";
 			bubble.appendChild(keyDiv);
 		};
 
+		//adds 'click' eventListener to each keyword bubble
+		var bubbleClick = document.getElementById("keywordBubble").addEventListener('click', openLinks, false);
+		function openLinks(e) {
+			if (e.target !== e.currentTarget){
+				var clickedItem = e.target.id
+				relatedArticles(clickedItem)
+			}
+			e.stopPropagation();
+		};
 
+		console.log(keyword_array);
 
-		// list_keywords.forEach(function(key){
-		// 	var list = document.createElement('li')
-		// 	list.innerHTML = key;
-		// 	keys.appendChild(list); 
-		// });
+		//chug out related articles to each keyword 
+		function relatedArticles(keywordId){
+			removeChildren('links');
+			var list = document.getElementById('links')
+			keyword_array.forEach(function(article) 
+				{article.keywords.forEach(function(keyword)
+					{if (keyword == keywordId){
+						var articleRef = document.createElement('li');
+						articleRef.href = article.web_url;
+						articleRef.innerHTML = article.headline;
+						var abstractList = document.createElement('ul');
+						var abstractItem = document.createElement('li');
+						abstractItem.innerHTML = "<strong>Abstract: </strong>" + article.abstract;
+						abstractList.appendChild(abstractItem);
+						articleRef.appendChild(abstractList);
+						list.appendChild(articleRef);
+						}
+					});
+				});			
+		};
 
-
-
-
-		
-
-
-
-
-		//articleObj.map(function(article) {return })
-		
-};
-
-
-		// var bookClubs = bookObject.data.map(function(group) {return {name: group.name, next_event: group.next_event, description: group.description, members: group.members};});
-		
-		// var rating = bookClubs.sort(function(a,b) {
-		// 	if (a.members > b.members){
-		// 		return -1;
-		// 	}
-		// 	if (b.members > a.members){
-		// 		return 1;
-		// 	}
-		// 	return 0; 
-		// });
-
-		
-
-		// console.log(rating);
-
-		// //$('#list').append('<li>' + bookClubs['0'].name + '</li>');
-		// var listEl = document.getElementById('list');
-
-
-		// rating.forEach(function(group) {
-		// 	var x = document.createElement('li');
-		// 	x.innerHTML = group.name;
-		// 	listEl.appendChild(x);
-
-		// 	var newOl = document.createElement('ol');
-		// 	var newLi = document.createElement('li');
-		// 	newLi.innerHTML = group.description;
-		// 	newOl.appendChild(newLi);
-
-		// });
-
-		//rating.map(function(group) {return document.getElementById('list') + ('<li>' + group.name + '</li>' + '<ul>' + '<li>' + group.description + '</li>' + '</ul>');});
 
 	
 };
