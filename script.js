@@ -12,11 +12,6 @@
 	-look into 'HTML5 Drag and Drop' for dragging keywords into subseqent searches?
 	-consider using SVGs for div circles
 
-	for cody
-	-draggable year element
-	-multiple calls
-	-formatting css
-
 */
 
 window.onload = function(){
@@ -281,8 +276,8 @@ window.onload = function(){
 				var keyDiv = document.createElement('div')
 				keyDiv.className = 'floatingKeyword';
 				keyDiv.id = keyword;
-				keyDiv.style.width = String(keyword_instances[keyword]*10 + 100) + "px";
-				keyDiv.style.height = String(keyword_instances[keyword]*10 + 50) + "px";
+				keyDiv.style.width = String(keyword_instances[keyword]*10 + 125) + "px";
+				keyDiv.style.height = String(keyword_instances[keyword]*10 + 100) + "px";
 				//add color to div according to score
 				var score = masterKeywordObj[keyword].score;
 				keyDiv.style.backgroundColor = colorAssignor(score);
@@ -293,22 +288,20 @@ window.onload = function(){
 				textDiv.style.fontSize = '15px';
 				textDiv.style.verticalAlign = 'middle';
 
-				//add category 
+				//add category and score
 				var categoryElement = document.createElement('p');
-				categoryElement.innerHTML = keyword_categories[keyword].toUpperCase();
-				categoryElement.style.fontSize = '8px';
+				categoryElement.innerHTML = keyword_categories[keyword].toUpperCase() + 
+				"<br>" + masterKeywordObj[keyword].score + "</br"
+				categoryElement.style.fontSize = '11px';
 				categoryElement.style.verticalAlign = 'middle';
 
-				//add score
-				var scoreElement = document.createElement('p');
-				scoreElement.innerHTML = masterKeywordObj[keyword].score;
-				scoreElement.style.fontSize = '8px';
-				scoreElement.style.verticalAlign = 'middle';
+				if (masterKeywordObj[keyword].score > 30){
+					keyDiv.style.color = "#FFFFFF";
+				}
 
 				
 				keyDiv.appendChild(textDiv);
 				keyDiv.appendChild(categoryElement);
-				keyDiv.appendChild(scoreElement);
 				bubble.appendChild(keyDiv);
 
 			};
