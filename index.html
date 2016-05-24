@@ -1,12 +1,25 @@
 <!DOCTYPE html>
 <html>
     <head>
-		<title>Highlights</title>
+		<title>Keywords - NY Times</title>
         <link rel='stylesheet' type='text/css' href='stylesheet.css'/>
         <script type="text/javascript" src='script.js'></script>
 	</head>
 
 <body class="body">
+
+
+<center><h1>New York Times Keyword Assist</h1></center>
+
+<div id="introParagraph" style="color:#808080">
+<p>The New York Times Keyword Assist is an application that takes a relevant key-term, like "climate change," or "Barack Obama," and chugs out a graphic of keywords most commonly associated with that key-term. The size of these "keyword bubbles" increases proportionally with the number of instances it shows up in relation to your inputed key-term, i.e. the size corresponds the keyword's relevance to your search query. Another aspect of the keyword's relevance taken into consideration here depends on an aspect of the New York Times' cataloging of keywords. Since 2006, the New York Times' has cataloged keywords for each corresponding article into two fields:
+</p>
+<ol> 
+<li>Whether or not the keyword is a major part of the article (indicated by a 'Y' or 'N') </li> 
+<li>The rank of that keyword in relation to the other keywords associated with the article.</li>
+</ol>
+<p>Based on those two conditions, I've created a scoring system that calculates the keywords score per article. From there, based on the number of instances the keyword appears, each individual score is added to an aggregate score for each keyword. If the score is negative, which will happen for non-relevant keywords, the bubble isn't added to the graphic.</p>
+</div>
 
 <center>
 	<div id="query">
