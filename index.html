@@ -3,7 +3,7 @@
     <head>
 		<title>Keywords - NY Times</title>
         <link rel='stylesheet' type='text/css' href='stylesheet.css'/>
-        <script type="text/javascript" src='script.js'></script>
+        <script type="text/javascript" src='./js/main.js'></script>
 	</head>
 
 <body class="body">
@@ -21,6 +21,7 @@
 <p>Based on those two conditions, I've created a scoring system that calculates the keywords score per article. From there, based on the number of instances the keyword appears, each individual score is added to an aggregate score for each keyword. If the score is negative, which will happen for non-relevant keywords, the bubble isn't added to the graphic.</p>
 </div>
 
+
 <center>
 	<div id="query">
 	<form id="searchField" onsubmit="return addtoQueryObject();">
@@ -29,8 +30,10 @@
 	<button id="submitQuery">Submit</button>
 	</div>
 
+<div id="keywordBubble">
+	
+</div>
 
-<div id="keywordBubble"></div>
 
 
 <div id="listLinks">
