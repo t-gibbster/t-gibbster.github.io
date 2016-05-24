@@ -1,12 +1,15 @@
 body {
-    background-color: lightblue;
+    background-color: #ffffff;
 }
+
 #query {
     border-radius: 25px;
     padding-top: 25px;
-    background-color: lightgreen;
+    border: 3px solid #000000;
     width: 350px;
-    height: 50px;
+    height: 100px;
+    margin-bottom: 10px;
+    margin-top: 10px;
 }
 
 #searchField {
@@ -23,24 +26,27 @@ body {
 }
 
 #submitQuery:hover {
-    background-color: #4CAF50;
+    background-color: #808080;
     color: white;
 }
 
 #keywordBubble {
     border-radius: 15px;
     padding-top: 10px;
-    width: 75%;
+    width: 90%;
     height: 300px;
+    border: 3px solid #000000;
     background-color: #ffffff; 
 }
 
 #listLinks {
-    padding-top: 10px;
+    margin-bottom: 10px;
+    margin-top: 10px;
     border-radius: 15px;
-    width: 75%;
-    height: 500px;
-    background-color: lightgreen;
+    width: 90%;
+    height: 1000px;
+    border: 3px solid #000000;
+    background-color: #ffffff;
 
 }
 
@@ -50,22 +56,22 @@ body {
 
 .floatingKeyword {
     border-radius: 100%;
-    background-color: lightgreen;
+    background-color: #ffffff;
+    margin-bottom: 10px;
+    margin-top: 10px;
     display: inline-block;
     width: 50px;
     height: 50px;
     margin: 3px;
-    border: 3px solid #73AD21;
+    border: 3px solid #000000;
     text-align: center;
     top: 50%;
     left: 50%;
     vertical-align: middle;
 
 }
-
-.highlighted {
-    -webkit-box-shadow: 0 0 8px #FFD700;
-    -moz-box-shadow: 0 0 8px #FFD700;
-    box-shadow: 0 0 8px #FFD700;
-    cursor:pointer;
+.floatingKeyword:hover {
+    background-color: #ffffff;
+    color: #ffffff;
 }
+
