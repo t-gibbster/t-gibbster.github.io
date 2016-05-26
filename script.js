@@ -1,63 +1,56 @@
-
-/*TO DO:
-	-figure out how to make multiple calls
-	-center keyword text size relative to div size
-	-add search term within keyword bubble to filter keyword bubbles
-	-Keyword categorization:
-		-near synonyms;
-		-names
-		-books
-		-orgs/countries
-		-journals
-	-look into 'HTML5 Drag and Drop' for dragging keywords into subseqent searches?
-	-consider using SVGs for div circles
+/*
+TO DO:
+-add other related keywords to master keyword object?
+-what about keywords prior to 2006?
+BUGS:
+-obama was iterating over 'persons' category...
 
 */
 
-window.onload = function(){
 
-	//create a multi-purpose function for specifying different API calls
-	var param = function(obj) {
-		var str = '';
-		for (i in obj){
-			str += "&" + i + "=" + obj[i]
-		}
-		return str;
+window.onload = function() {
+
+	//Master keyword object for all keyword information. 
+	var keywordObject = {};
+	/*
+	KEYWORD: [
+		{
+		category: 'category name'
+		instances: #, 
+		relevanceScore: #, 
+		relatedArticles: [
+			{
+			title: 'article title', 
+			Abstract: 'abstract', 
+			URL: url, 
+			individualRelevanceScore: #,
+			},
+			...
+		], 
+		... 
+	]
+	*/
+
+	//Container to start initiating calls. 
+	var firstApiUrl = {};
+
+	//Log new search query and call next function.
+	var submit = document.getElementById('submitQuery');
+	submit.onclick = function() {
+			var searchTerm = document.getElementById('search_term').value;
+			var startDate = document.getElementById('startDate').value;
+			var endDate = document.getElementById('endDate').value;
+			//Assuming we are entering dates in NY format
+			//FIXME: need to catch empty values and return to user alerts
+
+			//Make keywordObject empty in case it isn't already is. 
+			keywordObject = {};
+
+			firstApiUrl = processNewSearchTerm(searchTerm, startDate, endDate);
+			makeCall();
 	};
 
-	function call(){
-
-		var url = 'https://api.nytimes.com/svc/search/v2/articlesearch.json'
-		url += '?' + 'api-key=41315c4eb6074fdf8d8972e83fe73cd5' + param(queryObject)
-
-		var xhr = new XMLHttpRequest();
-
-		xhr.onreadystatechange = function() {
-			if (xhr.readyState == 4 && xhr.status == 200){
-				var myArr = JSON.parse(xhr.responseText);
-				nyTimes(myArr);
-			}
-		};
-
-		xhr.open('GET', url, true)
-		xhr.send();
-
-		};
-
-	var queryObject = {
-		'q': '"climate change"',
-		'page': '0',
-		
-	};
-
-	document.getElementById("submitQuery").addEventListener('click', function() {
-		var searcInput = document.getElementById("search_term").value;
-		queryObject['q'] = searcInput;
-		console.log(queryObject)
-		call()
-	});
-
-	//clears HTML elements so new search can be implemented 
+	//Clears HTML elements so new search can be implemented. 
 	var removeChildren = function(elementId){
 		var myNode = document.getElementById(elementId);
 		while (myNode.firstChild){
@@ -65,368 +58,436 @@ window.onload = function(){
 		};
 	};
 
+	//Process search query and the build URL for the API calls. 
+	var processNewSearchTerm = function(searchTerm, startDate, endDate) {
 
-//idea for iterating through API calls?
-// for (var i = 0; i < 10; i++){
-// 	queryObject['page'] = i;
-// 	call();
-// };
-
-
-
-
-	function nyTimes(articles){
-
-		//HELPER FUNCTIONS
-
-		//flatten function for multidimensional arrays; need to work on for more than 2d arrays
-		var flat = function(array){
-    		var newArr = [];
-			for (var i = 0; i < array.length; i++){
-                var innerArr = array[i]
-				for (var j = 0; j < innerArr.length; j++){
-					newArr.push(innerArr[j])
-				};
-			};
-            return newArr;
+		//Clean up of any existing HTML elements from last search. 
+		removeChildren('keywordBubble'); //definitely need to rename
+		removeChildren('links');
+		
+		//Assuming we are taking a NYTimes formatted date.
+		var convertToJsDate = function(nyTimesDate) {
+			var year = nyTimesDate.substring(0,4);
+			var month = nyTimesDate.substring(4,6) - 1;
+			var day = nyTimesDate.substring(6,8);
+			return new Date(year, month, day);
 		};
 
-		//instancesGen returns a new Object from an array that tracks the number of instances each item in the array appears
-		var instancesGen = function(array){
-			var instancesObj = new Object();
-			for (var i = 0; i < array.length; i++){
-				if (instancesObj.hasOwnProperty(array[i])) {
-					instancesObj[array[i]] += 1;
-					}
-				else{
-					instancesObj[array[i]] = 1
-					}
+		//Converts the date the New York Times format. 
+		var convertToNyDate = function(javscriptDate) {
+			var year = String(javscriptDate.getFullYear());
+			var month = String(javscriptDate.getMonth() + 1);
+			if (month.length !== 2) {
+				month = '0' + month;
 			}
-			return instancesObj;
+			var day = String(javscriptDate.getDate());
+			if (day.length !== 2) {
+				day = '0' + day;
+			}
+			return year + month + day; 
 		};
 
-		//categoryGen assigns each keyword is associated category; 
-		//second conditional "else" checks to see if there are mutliple categories foreach keyword
-		var categoryGen = function(array){
-			var categoryObj = new Object();
-
-			array.forEach(function(article) {
-				article.keyword_scores.forEach(function(key) {
-
-				var keyword = key.keyword;
-				var category = key.category;
-
-				if (!categoryObj.hasOwnProperty(keyword)){
-					categoryObj[keyword] = category;
-				}
-				else if (categoryObj[keyword] !== category){
-					categoryObj[keyword] = categoryObj[keyword] + " & " + category;
-				};
-				})
-			});
-
-			return categoryObj;
-		};
-
-		//scoreGen calculates the aggregate score for each of the keywords 
-		var scoreGen = function(array) {
-			var scoreObj = new Object();
-
-			array.forEach(function(article) {
-				article.keyword_scores.forEach(function(key) {
-					var keyword = key.keyword;
-					var score = key.score;
-
-					if (scoreObj.hasOwnProperty(keyword)){
-						scoreObj[keyword] += score;
-					}
-					else {
-						scoreObj[keyword] = score;
-					};
-				})
-			});
-			return scoreObj;	
+		//Checks to see if arguments are currently in Javascript format.
+		if (typeof(startDate) === "object" || typeof(endDate) === "object") {
+			var startDate_nytimes = convertToNyDate(startDate);
+			var endDate_nytimes = convertToNyDate(endDate);
+		}
+		else {
+			var startDate_nytimes = startDate;
+			var endDate_nytimes = endDate;
 		}
 
-		//calculates relevant score of each keyword instance 
-		var calculateScore = function(arr) {
-			/*
-			if major +5; if not major -5
-			Rank
-			1 - +8
-			2 - +7
-			3 - +6
-			4 - +5
-			5 - +4
-			6... - +0
-			*/
-			var rankScores = {'1': 8, '2': 7, '3': 6, '4': 5, '5': 4, "6+": 0}
+		//Checks to see if the arguments are currently in New York Times format. 
+		if (typeof(startDate) === "string" || typeof(endDate) === "string") {
+			
+			var startDate_js = convertToJsDate(startDate);
+			var endDate_js = convertToJsDate(endDate);
+		}
+		else {
+			var startDate_js = startDate;
+			var endDate_js = endDate;
+		}
 
-			/*
-			returned keyword array: 
-			[
-			{is_major: "Y/N", 
-			name: (category)
-			rank: #
-			value: "keyword"}
-			...
-			]
-			*/
-			return arr.map(function(keyword) {
-				var total = keyword.is_major === 'Y' ? 5 : -5
-				if (keyword.rank < 6){
-					total += rankScores[keyword.rank]
-				}
-				return {keyword: keyword.value, score: total, category: keyword.name};});
+		//FIXME: Reformat date inputs in accordance with NY Times API, i.e. "YYYYMMDD"
 
+		//Begins building URL to be used in API call
+		var url = 'https://api.nytimes.com/svc/search/v2/articlesearch.json';
+		//Adds API key.
+		url += '?' + 'api-key=41315c4eb6074fdf8d8972e83fe73cd5';
+		//Adds search parameters.
+		url += '&' + 'q' + '=' + searchTerm;
+		url += '&' + 'begin_date' + '=' + startDate_nytimes;
+		url += '&' + 'end_date' + '=' + endDate_nytimes;
+
+		
+
+		return {url: url, startDate_js: startDate_js, endDate_js: endDate_js, searchTerm: searchTerm};
+	};
+
+	//Process new JSON and log data into the keywordObject. 
+	var addToKeywordObject = function(jsonObject) {
+
+		//Array of 10 articles for each API call. 
+		var articleArray = jsonObject.response.docs;
+
+		//Saves meta data regarding search query. 
+		var metaDataObject = jsonObject.response.meta;
+		/*
+		{meta: 
+			{
+			hits: #,
+			offset: #,
+			time: #
+			}
+		}
+		*/
+
+		//Calculates relevance score for each keyword within each article
+		var calculateScore = function(keywordObject) {
+			/*
+			If keyword is marked 'major' then +5
+			If keyword is NOT marked 'major' then -5
+			Rank Score
+				1st - +8
+				2nd - +7
+				3rd - +6
+				4th - +5
+				5th - +4
+				6th... - +0
+			*/
+			var rankScores = {'1': 8, '2': 7, '3': 6, '4': 5, '5': 4, "6+": 0};
+			var score = 0;
+			score += keywordObject.is_major === 'Y' ? 5 : -5;
+			if (keywordObject.rank < 6) {
+				score += rankScores[keywordObject.rank]
+			}
+			return score; 
 		};
+
+		/*
+		Returned keyword array: [
+			{
+			is_major: "Y/N", 
+			name: (category),
+			rank: #,
+			value: "keyword",
+			},
+			...
+		]
+		*/
+
+		//Adjusts keywordObject according to new data set. 
+		articleArray.forEach(function(article) {
+			article.keywords.forEach(function(keyword) {
+
+				var relevanceScore = calculateScore(keyword);
+
+				if (keywordObject.hasOwnProperty(keyword.value)) {
+
+					// //Checks to see if the pre-existing category differs from the current one
+					// if (keywordObject[keyword.value].category !== keyword.name) {
+					// 	keywordObject[keyword.value].category = keywordObject[keyword.value].category + ' & ' + keyword.name;
+					// }
+
+					//Adds another instance of the keyword.
+					keywordObject[keyword.value].instances += 1;
+
+					//Adds relevanceScore to pre-existing score. 
+					keywordObject[keyword.value].relevanceScore += relevanceScore;
+
+					//Adds article information to pre-existing array.
+					keywordObject[keyword.value].relatedArticles.push(
+							{
+							title: article.headline.main,
+							abstract: article.abstract,
+							url: article.web_url,
+							individualRelevanceScore: relevanceScore,
+							}
+					);
+
+				}
+				else {
+					keywordObject[keyword.value] = {
+						category: keyword.name,
+						instances: 1,
+						relevanceScore: relevanceScore,
+						relatedArticles: [{
+							title: article.headline.main,
+							abstract: article.abstract,
+							url: article.web_url,
+							individualRelevanceScore: relevanceScore,
+						}],
+					}
+
+				}
+
+			})
+		});		
+	};
+
+	// //Adds 'click' eventListener to each keyword bubble.
+	// var bubbleClick = document.getElementById("keywordBubble").addEventListener('click', openLinks, false);
+
+	// var openLinks = function(e) {
+	// 	if (e.target !== e.currentTarget){
+	// 		var clickedItem = e.target.id
+	// 		relatedArticles(clickedItem)
+	// 	}
+	// 	e.stopPropagation();
+	// };
+
+	// 	//Lists out related articles to each keyword.
+	// var relatedArticles = function(keyword) {
+	// 	removeChildren('links');
+	// 	var list = document.getElementById('links')
+	// 	keywordObject[keyword].relatedArticles.forEach(function(article) {
+	// 		var articleRef = document.createElement('li');
+	// 		articleRef.innerHTML = "<a href=" + article.url + ">" + article.title + "</a>";
+	// 		// var abstractList = document.createElement('ul');
+	// 		// var abstractItem = document.createElement('li');
+
+	// 		// var nullCase = "<i>No abstract available</i>"
+	// 		// abstractItem.innerHTML = "<strong>Abstract: </strong>" + (article.abstract !== null ? article.abstract : nullCase);
+	// 		// abstractList.appendChild(abstractItem);
+	// 		// articleRef.appendChild(abstractList);
+	// 		list.appendChild(articleRef);
+	// 	});	
+	// };
+
+	var refreshPage = function() {
 
 		// colorAssignor takes the score for each particular keyword and assigns it a color
-		var colorAssignor = function(keywordScore){
-
+		var colorAssignor = function(keywordScore) {
 			var score = parseInt(keywordScore);
-
-			if(0 < score && score <= 10){
+			if (0 < score && score <= 10) {
 					return "#C0C0C0"; //light grey;
-			}
-			else if (10 < score && score <= 20){
+			} else if (10 < score && score <= 20) {
 					return "#808080"; //darker grey;
-			}
-			else if (30 < score && score <= 40){
+			} else if (30 < score && score <= 40) {
 					return "#404040"; //darker grey;
+			} else if (40 < score) {
+					return "#000000"; // black;
 			}
-			else if (40 < score){
-					return "#000000"; //almost black;
-			}
-				
-
 		};
 
+		/*
+		For reference: 
+		KEYWORD: [
+			{
+			category: 'category name'
+			instances: #, 
+			relevanceScore: #, 
+			relatedArticles: [
+				{
+				title: 'article title', 
+				Abstract: 'abstract', 
+				url: url, 
+				individualRelevanceScore: #,
+				},
+				...
+			], 
+			... 
+		]
+		*/
 
+		Object.keys(keywordObject).forEach(function(keyword) {
 
-		//END OF HELPER FUNCTIONS
+			if (keywordObject[keyword].relevanceScore > 0) {
+				var keywordDiv = document.createElement('div');
+				keywordDiv.innerHTML = '<strong>' + keyword + '</strong>';
+				keywordDiv.innerHTML += '<br>' + keywordObject[keyword].category + '</br>';
+				keywordDiv.className = 'floatingKeyword';
+				keywordDiv.id = keyword;
 
-
-		var articleObj = articles.response.docs
-		console.log(articleObj)
-
-		var keywords = articleObj.map(function(article) {return article.keywords
-			.map(function(keyword) {return keyword.value;});});
-		
-		//console.log(keywords)
-
-		var keys = document.getElementById('keywords');
-
-
-		//the below could be definitely be more concise
-		var list_keywords = [];
-
-		keywords.forEach(function(key) { 
-			key.forEach(function(word){
-				list_keywords.push(word);
-			});
-		});
-
-		list_keywords.sort();
-		
-		
-	
-		var keyword_array = articleObj.map(function(article) {
-			return {
-				web_url: article.web_url, 
-				headline: article.headline.main,
-				abstract: article.abstract,
-				keywords: article.keywords
-					// .filter(function(keyword) {
-					// 	return keyword.is_major == "Y";
-					// })
-					.map(function(keyword) {
-						return keyword.value;
-					}),
-				keyword_scores: calculateScore(article.keywords)
-			};
-		});
-
-		console.log(keyword_array)
-
-		var keyword_instances = instancesGen(flat(keyword_array.map(function(prop) {return prop.keywords;})));
-		var keyword_categories = categoryGen(keyword_array);
-		var keyword_scores = scoreGen(keyword_array);
-
-		//the below for loop takes the above objects and combines them into one object
-		var masterKeywordObj = new Object();
-		//use of keyword_instances is abitrary; just using it to generate the list of keyword properties 
-		for (var keyword in keyword_instances){
-			masterKeywordObj[keyword] = {score: keyword_scores[keyword], category: keyword_categories[keyword], instances: keyword_instances[keyword]}
-
-		};
-
-		console.log(masterKeywordObj);
-
-		//creates keyword bubbles from object 'keyword_instances'
-		var bubble = document.getElementById("keywordBubble");
-		removeChildren('keywordBubble');
-
-		//add keyword bubbles
-		for (var keyword in keyword_instances){
-
-			if (masterKeywordObj[keyword].score > 0){
-
-				//add bubble
-				var keyDiv = document.createElement('div')
-				keyDiv.className = 'floatingKeyword';
-				keyDiv.id = keyword;
-				keyDiv.style.width = String(keyword_instances[keyword]*10 + 125) + "px";
-				keyDiv.style.height = String(keyword_instances[keyword]*10 + 100) + "px";
+				keywordDiv.style.width = String(keywordObject[keyword].instances*10 + 125) + 'px';
+				keywordDiv.style.height = String(keywordObject[keyword].instances*10 + 100) + 'px';
 				//add color to div according to score
-				var score = masterKeywordObj[keyword].score;
-				keyDiv.style.backgroundColor = colorAssignor(score);
+				keywordDiv.style.backgroundColor = colorAssignor(keywordObject[keyword].relevanceScore);
 
-				//add keyword
-				var textDiv = document.createElement('div');
-				textDiv.innerHTML = "<strong>" + keyword + "</strong";
-				textDiv.style.fontSize = '15px';
-				textDiv.style.verticalAlign = 'middle';
+				//Change text to white if the keywordDiv is dark. 
+				if (keywordObject[keyword].relevanceScore > 30) {
+					keywordDiv.style.color = '#ffffff';
+				};
 
-				//add category and score
-				var categoryElement = document.createElement('p');
-				categoryElement.innerHTML = keyword_categories[keyword].toUpperCase() + 
-				"<br>" + masterKeywordObj[keyword].score + "</br"
-				categoryElement.style.fontSize = '11px';
-				categoryElement.style.verticalAlign = 'middle';
+				var bubble = document.getElementById('keywordBubble');
 
-				if (masterKeywordObj[keyword].score > 30){
-					keyDiv.style.color = "#FFFFFF";
-				}
+				bubble.appendChild(keywordDiv);
 
-				
-				keyDiv.appendChild(textDiv);
-				keyDiv.appendChild(categoryElement);
-				bubble.appendChild(keyDiv);
-
-			};
-
-		};
-
-		//adds 'click' eventListener to each keyword bubble
-		var bubbleClick = document.getElementById("keywordBubble").addEventListener('click', openLinks, false);
-		function openLinks(e) {
-			if (e.target !== e.currentTarget){
-				var clickedItem = e.target.id
-				relatedArticles(clickedItem)
-			}
-			e.stopPropagation();
-		};
-
-		console.log(keyword_array);
-
-
-		//chug out related articles to each keyword 
-		function relatedArticles(keywordId){
-			removeChildren('links');
-			var list = document.getElementById('links')
-			keyword_array.forEach(function(article) 
-				{article.keywords.forEach(function(keyword)
-					{if (keyword == keywordId){
-						var articleRef = document.createElement('li');
-						articleRef.innerHTML = "<a href=" + article.web_url + ">" + article.headline + "</a>";
-						var abstractList = document.createElement('ul');
-						var abstractItem = document.createElement('li');
-
-						var nullCase = "<i>No abstract available</i>"
-						abstractItem.innerHTML = "<strong>Abstract: </strong>" + (article.abstract !== null ? article.abstract : nullCase);
-						abstractList.appendChild(abstractItem);
-						articleRef.appendChild(abstractList);
-						list.appendChild(articleRef);
+				//To add functionality to each keyword block to load the list of 
+				//related articles to that specific keyword. 
+				var keywordBlock = document.getElementById(keyword);
+				keywordBlock.onclick = function() {
+					//Cleanup any prexisting article list. 
+					removeChildren('links');
+					
+					/*
+					For reference: 
+					keywordObject = {
+						KEYWORD: 
+						{
+						category: 'category name'
+						instances: #, 
+						relevanceScore: #, 
+						relatedArticles: [
+							{
+							title: 'article title', 
+							Abstract: 'abstract', 
+							url: url, 
+							individualRelevanceScore: #,
+							},
+						], 
+						... 
 						}
+						...
+					}
+					*/
+
+					var articleList = document.getElementById('links');
+
+					keywordObject[keyword].relatedArticles.forEach(function(article) {
+						//Add title 
+						var articleEntry = document.createElement('li');
+						articleEntry.innerHTML = '<a href=' + article.url + '>' + article.title + '</a>'; 
+						articleList.appendChild(articleEntry);
 					});
-				});			
-		};
+				};
+			}
+		})
 
-		
+	};
 
+	//In order to keep track of the number of API calls in the console. 
+	var counter = 0; 
 
+	//Execute API call.
+	var loadNewPage = function(apiObject, cb) {
+      
+      var xhr = new XMLHttpRequest();
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4 && xhr.status == 200){
+          var newJson = JSON.parse(xhr.responseText);
+          addToKeywordObject(newJson);
 
-		// for (var key in keyword_instances){
-		// 	if (/\.*[,]\.*/.test(key)){
-		// 		var cat = "PERSON"
-		// 	}
+          //Console info. 
+          console.log(keywordObject);
+          counter += 1;
+          console.log("NUMBER OF CALLS: ", counter);
 
-		// 	switch(cat){
-		// 		case "PERSON": //testing for people names
-		// 			addCategory(key, "PERSON");
-		// 			break;
-		// 		default:
-		// 			addCategory(key, "NO CATEGORY")
-		// 	}
-		// }
+          //Callback function to hold the next API call until the previous one has completed.
+          cb();
+        }
+      };
+      xhr.open('GET', apiObject.url, true)
+      xhr.send();
+    }
 
+    //Callback function as specified as a parameter in 'loadNewPage' function to be passed to make successive API calls.
+    var makeRequests = function(apiObject) {
+    	
+    	//Base Case
+		if (apiObject.startDate_js >= apiObject.endDate_js) {
+			console.log("FINISHED");
+			refreshPage();
+			return;
+		}
 
+		//Call new API recursively. 
+		loadNewPage(apiObject, function() {
+			var newApiObject = apiObject;
 
+			//Add 30 days to start date.
+			var newStartDate_js = newApiObject.startDate_js;
+			newStartDate_js.setDate(newStartDate_js.getDate() + 30);
+			newApiObject.startDate_js = newStartDate_js;
 
+			newApiObject = processNewSearchTerm(newApiObject.searchTerm, newStartDate_js, newApiObject.endDate_js)
 
+			//add a call to processNewSearchterm to build new URL
+			makeRequests(newApiObject);
 
-		// for (var art in keyword_instances){
-		// 	document.getElementById(art).addEventListener('click', test(), false)
-		// };
+		});
+    }
 
+    //Starts the API calls. 
+    function makeCall() {
+    	makeRequests(firstApiUrl);
+    };
 
+    /*
+    firstApiUrl = {url: url, startDate: startDate_js, endDate: endDate_js, searchTerm: searchTerm};
+    */
 
+	var selected = null, // Object of the element to be moved
+	    x_pos = 0, // Stores x oordinates of the mouse pointer
+	    x_elem = 0,// Stores eft values (edge) of the element
+	    x_max = 575,
+	    x_min = 0,
+	    x_temp;
 
+	// Will be called when user starts dragging an element
+	var drag = function(elem) {
+	    // Store the object of the element which needs to be moved
+	    selected = elem; //return the divId you just clicked on
+	    x_elem = selected.offsetLeft; // selected.offsetLEft returns position of the div you clicked, x_pos is not 0, result negative?
+	    
 
-		// list_keywords.forEach(function(key){
-		// 	var list = document.createElement('li')
-		// 	list.innerHTML = key;
-		// 	keys.appendChild(list); 
-		// });
+	};
 
+	// Will be called when user dragging an element
+	//'e' is the event, the function associated with the event handler receives itself as an argument 
+	var moveElement = function(e) {
+	    x_pos = document.all ? window.event.clientX : e.pageX; //x_pos reassigned to the position of the cursor 
+	    timeElement1 = document.getElementById('draggable-element1').offsetLeft;
+	    timeElement2 = document.getElementById('draggable-element2').offsetLeft;
+	    //console.log(timeElement1)
+	    if (selected !== null) {
+	    	var currentElement = selected.id;
+	    	x_temp = x_pos - x_elem;
+	    	//console.log('x_temp is ', x_temp)
+	    	// if (currentElement = 'draggable-element1') {
+	    	// 	x_max = x_max > timeElement2 ? x_max : timeElement2;
+	    	// }
+	    	if (currentElement === 'draggable-element1') {
+		    	if (x_temp > x_max || x_temp > timeElement2) {
+		    		x_temp = x_max > timeElement2 ? x_max : timeElement2;
+		    	} else if (x_temp < x_min) {
+		    		x_temp = x_min; 
+		    	}
+		    } else if (currentElement === 'draggable-element2') {
+		    	if (x_temp > x_max) {
+		    		x_temp = x_max;
+		    	} else if (x_temp < x_min || x_temp < timeElement2) {
+		    		x_temp = x_min > timeElement1 ? x_min : timeElement1; 
+		    	}
+		    }
+	        selected.style.left = x_temp + 'px';
 
+	    }
+	};
 
+	// Destroy the object when we are done
+	var deSelect = function() {
+	    selected = null;
+	};
 
-		
+	var timeElement1 = document.getElementById('draggable-element1').offsetLeft;
+	console.log(timeElement1)
+	document.getElementById('draggable-element1').onmousedown = function () {
+	    drag(this);
+	    return false;
+	};
 
+	var timeElement2 = document.getElementById('draggable-element2').offsetLeft;
+	document.getElementById('draggable-element2').onmousedown = function () {
+	    drag(this);
+	    return false;
+	};
 
+	document.onmousemove = moveElement;
+	document.onmouseup = deSelect;
 
-
-		//articleObj.map(function(article) {return })
-		
 };
 
 
-		// var bookClubs = bookObject.data.map(function(group) {return {name: group.name, next_event: group.next_event, description: group.description, members: group.members};});
-		
-		// var rating = bookClubs.sort(function(a,b) {
-		// 	if (a.members > b.members){
-		// 		return -1;
-		// 	}
-		// 	if (b.members > a.members){
-		// 		return 1;
-		// 	}
-		// 	return 0; 
-		// });
 
-		
-
-		// console.log(rating);
-
-		// //$('#list').append('<li>' + bookClubs['0'].name + '</li>');
-		// var listEl = document.getElementById('list');
-
-
-		// rating.forEach(function(group) {
-		// 	var x = document.createElement('li');
-		// 	x.innerHTML = group.name;
-		// 	listEl.appendChild(x);
-
-		// 	var newOl = document.createElement('ol');
-		// 	var newLi = document.createElement('li');
-		// 	newLi.innerHTML = group.description;
-		// 	newOl.appendChild(newLi);
-
-		// });
-
-		//rating.map(function(group) {return document.getElementById('list') + ('<li>' + group.name + '</li>' + '<ul>' + '<li>' + group.description + '</li>' + '</ul>');});
-
-	
-};
 
