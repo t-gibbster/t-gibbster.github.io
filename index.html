@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
     <head>
-		<title>Keywords - NY Times</title>
+	<title>Keywords - NY Times</title>
         <link rel='stylesheet' type='text/css' href='stylesheet.css'/>
-        <script type="text/javascript" src='script.js'></script>
+        <script type="text/javascript" src='./js/script.js'></script>
 	</head>
 
 <body class="body">
@@ -22,12 +22,24 @@
 </div>
 
 
+
 <center>
 	<div id="query">
 	<form id="searchField" onsubmit="return addtoQueryObject();">
 	  	Search Term: <input type="text" id="search_term" value="climate change">
+	  	<br></br>
+	  	Start Date: <input type="text" id="startDate" value="20151101"> 
+	  	<br></br>
+	  	End Date: <input type="text" id="endDate" value="20160101">
 	</form>
 	<button id="submitQuery">Submit</button>
+
+	<div id='line'>
+		<div id='draggable-element1' class='timeParams'>1</div>
+		<div id='draggable-element2' class='timeParams'>2</div>
+	</div>
+	
+
 	</div>
 
 <div id="keywordBubble">
