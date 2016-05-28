@@ -2,22 +2,37 @@ body {
     background-color: #ffffff;
 }
 
+#introParagraph {
+    width: 90%;
+
+}
+
 #query {
     border-radius: 25px;
     padding-top: 25px;
-    border: 3px solid #000000;
-    width: 800px;
-    height: 200px;
+    width: 1000px;
+    height: 400px;
     margin-bottom: 10px;
     margin-top: 10px;
 }
 
-#searchField {
+#search {
+    width: 200px;
+    height: 50px;
+    display: inline-block;
+}
 
+#search_term {
+    display: inline-block;
+    width: 200px;
+    height: 50px;
+    font-size: 20px;
+    text-align: center;
+}
+
+#searchField {
     text-align: center;
     display: inline-block;
-    padding-bottom: 40px;
-
 }
 
 #submitQuery {
@@ -31,15 +46,20 @@ body {
     color: white;
 }
 
+#loadingElement {
+    width: 100px;
+    height: 50px;
+    font-size: 25px;
+}
+
 #keywordBubble {
     border-radius: 15px;
     padding-top: 10px;
     padding-bottom: 10px;
     width: 95%;
-    height: 300px;
+    height: 1000px;
     background-color: #ffffff; 
     overflow: scroll;
-    border: 3px solid #000000;
 }
 
 #listLinks {
@@ -48,10 +68,8 @@ body {
     border-radius: 15px;
     width: 90%;
     height: 1000px;
-    border: 3px solid #000000;
     background-color: #ffffff;
     overflow: scroll;
-
 }
 
 #links{
@@ -59,7 +77,6 @@ body {
 }
 
 .floatingKeyword {
-    /*border-radius: 100%;*/
     background-color: #ffffff;
     display: inline-block;
     margin: 3px;
@@ -68,7 +85,6 @@ body {
     top: 50%;
     left: 50%;
     vertical-align: middle;
-
 }
 .floatingKeyword:hover {
     border: 3px solid #87CEEB;
@@ -84,11 +100,7 @@ body {
     position:relative;
 }
 
-#draggable-element1 {
-    float: left;
-}
-
-#draggable-element2 {
+#startDateElement {
     float: left;
 }
 
@@ -96,15 +108,30 @@ body {
     background-color: #87CEEB;
 }
 
+
+
 #line {
-   /*display: block;*/
-  /* position: relative;*/
-   /*padding: 0;*/
-   /*margin-top: 8px;*/
-   width: 80%;
-   height: 1px;
-   /*font-size: 1px;*/
-   border-top: 1px solid #aaaaaa;
-   border-bottom: 1px solid #ffffff;
+   width: 90%;
+   height: 3px;
+   border-top: 5px solid #aaaaaa;
+   border-bottom: 5px solid #ffffff;
+   border-radius: 15px;
 }
+
+.liveDate {
+    border-radius: 15px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    width: 150px;
+    height: 50px;
+    background-color: #ffffff; 
+    text-align: center;
+    font-size: 50px;
+    display: inline-block;
+}
+
+.articleTables {
+    width: 100%;
+}
+
 
