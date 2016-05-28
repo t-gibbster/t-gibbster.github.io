@@ -1,57 +1,84 @@
 <!DOCTYPE html>
 <html>
     <head>
-	<title>Keywords - NY Times</title>
+		<title>Keywords - NY Times</title>
         <link rel='stylesheet' type='text/css' href='stylesheet.css'/>
         <script type="text/javascript" src='script.js'></script>
 	</head>
 
 <body class="body">
 
+<center><h1>The New York Times Keyword Assist</h1></center>
+<center>
+<div id="introParagraph" style="color:#808080; text-align:left">
+	<p>The New York Times Keyword Assist is an application that takes a relevant key-term, like "climate change," or "Barack Obama," and chugs out a graphic of keywords most commonly associated with that key-term. The size of these "keyword bubbles" corresponds with the number of instances it shows up in relation to your key-term, so in other words, the size corresponds with the keyword's relevance to your search query.</p> 
 
-<center><h1>New York Times Keyword Assist</h1></center>
+	<p>Another aspect of the keyword's relevance taken into consideration here depends on an aspect of the New York Times' cataloging of keywords. Since 2006, the New York Times' has cataloged keywords for each corresponding article into two fields:
+	</p>
 
-<div id="introParagraph" style="color:#808080">
-<p>The New York Times Keyword Assist is an application that takes a relevant key-term, like "climate change," or "Barack Obama," and chugs out a graphic of keywords most commonly associated with that key-term. The size of these "keyword bubbles" increases proportionally with the number of instances it shows up in relation to your inputed key-term, i.e. the size corresponds the keyword's relevance to your search query. Another aspect of the keyword's relevance taken into consideration here depends on an aspect of the New York Times' cataloging of keywords. Since 2006, the New York Times' has cataloged keywords for each corresponding article into two fields:
-</p>
-<ol> 
-<li>Whether or not the keyword is a major part of the article (indicated by a 'Y' or 'N') </li> 
-<li>The rank of that keyword in relation to the other keywords associated with the article.</li>
-</ol>
-<p>Based on those two conditions, I've created a scoring system that calculates the keywords score per article. From there, based on the number of instances the keyword appears, each individual score is added to an aggregate score for each keyword. If the score is negative, which will happen for non-relevant keywords, the bubble isn't added to the graphic.</p>
+	<ol> 
+	<li>Whether or not the keyword is a major part of the article (indicated by a 'Y' or 'N') </li> 
+	<li>The rank of that keyword in relation to the other keywords associated with the article.</li>
+	</ol>
+
+	<p>Based on those two conditions, I've created a scoring system that calculates the keywords score per article. From there, based on the number of instances the keyword appears, each individual score is added to an aggregate score for each keyword. If the score is negative, which will happen for non-relevant keywords, the bubble isn't added to the graphic. If the indicated time range consists of dates before 2006, the score calculator will add a mediocre score to the data set. The grayscale gives a visual indication of the score, with darker blocks indicating higher scores.</p>
+
+	<p>To interact with the webpage, enter in your search query, and set your date parameters by clicking and dragging the "Start" and "End" circles. Then hit "Enter," and the program will go to work! Currently, in order to maximize the data set, I am running multiple API calls over a time interval that is set depending on the time range you enter. So if you picked a large time interval, it may take a little while. Once finished, the keyword graphic will apear, and you can click on the keyword of your chooosing, which will generate a comprehensive list of related articles. Enjoy your browsing!</p>
+
+	<p>-Troy</p>
 </div>
+</center>
 
+	<center>
+	<div id="query">
 
+	<table style='padding-bottom: 25px'>
+		<tr>
+
+		<td style='padding: 20px; padding-right: 100px'>
+			<div id='start' class='liveDate'></div>
+		</td>
+
+		<td style='padding: 20px'>
+		<center>
+			<div id='search'>
+			<form id="searchField">
+			  	<input type="text" id="search_term" value="climate change">
+			  	<p style='color:#666; font-size: 18px'><i>Press 'Enter'</i></p>
+			  	<br></br>
+			</form>
+			</div>
+		</center>
+		</td>
+
+		<td style='padding: 20px; padding-left: 100px'>
+			<div id='end' class='liveDate'></div>
+		</td>
+	
+		</tr>
+
+		<th colspan='3'>
+			<div id='line'>
+				<div style='font-size:12px' id='startDateElement' class='timeParams'>Start</div>
+				<div style='font-size:12px' id='endDateElement' class='timeParams'>End</div>
+			</div>
+		</th>
+	</table>
+	
+	<br></br>	
+
+	<div id='loadingElement'></div>
+	
+	</div>
+</center>
 
 <center>
-	<div id="query">
-	<form id="searchField" onsubmit="return addtoQueryObject();">
-	  	Search Term: <input type="text" id="search_term" value="climate change">
-	  	<br></br>
-	  	Start Date: <input type="text" id="startDate" value="20151101"> 
-	  	<br></br>
-	  	End Date: <input type="text" id="endDate" value="20160101">
-	</form>
-	<button id="submitQuery">Submit</button>
-
-	<div id='line'>
-		<div id='draggable-element1' class='timeParams'>1</div>
-		<div id='draggable-element2' class='timeParams'>2</div>
-	</div>
-	
-
-	</div>
 
 <div id="keywordBubble">
-	
 </div>
-
-
 
 <div id="listLinks">
 	<h3>Related Articles</h3>
-	
-
 	<ol id="links">
 	</ol>
 </div>
