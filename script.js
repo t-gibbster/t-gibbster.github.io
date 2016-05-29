@@ -51,39 +51,44 @@ window.onload = function() {
 
 	//Log new search query and call next function.
 	document.onkeydown = function(e) {
+	
 		if (e.keyCode === 13) {
-
-			var searchTerm = document.getElementById('search_term').value;
-			
-			//A double-check in the event that the start/endDateElements are switched. 
-			var presumptiveStart = new Date(timeObject[startDateElement]);
-			var presumptiveEnd = new Date(timeObject[endDateElement]);
-
-			var startDate = presumptiveStart < presumptiveEnd ? presumptiveStart : presumptiveEnd;
-			var endDate = presumptiveEnd > presumptiveStart ? presumptiveEnd : presumptiveStart;
-
-			var calculateDateIterator = function(startDate, endDate) {
-				//Year in miliseconds = 3.154e10.
-				timePeriod = (endDate - startDate) / 3.154e10;
-
-				if (timePeriod < 10) {
-					dateIterator = 30;
-				} else if (10 <= timePeriod && timePeriod < 50) {
-					dateIterator = 90;
-				} else if (50 <= timePeriod && timePeriod < 100) {
-					dateIterator = 180;
-				} else if (100 <= timePeriod) {
-					dateIterator = 360; 
-				}
-			};
-
-			calculateDateIterator(startDate, endDate);
-
-			//Make keywordObject empty in case it isn't already is. 
-			keywordObject = {};
-
-			firstApiUrl = processNewSearchTerm(searchTerm, startDate, endDate);
-			makeCall();
+			if (document.getElementById('search_term').value === '') {
+				alert("You didn't enter in a search query!");
+			} else {
+	
+				var searchTerm = document.getElementById('search_term').value;
+				
+				//A double-check in the event that the start/endDateElements are switched. 
+				var presumptiveStart = new Date(timeObject[startDateElement]);
+				var presumptiveEnd = new Date(timeObject[endDateElement]);
+	
+				var startDate = presumptiveStart < presumptiveEnd ? presumptiveStart : presumptiveEnd;
+				var endDate = presumptiveEnd > presumptiveStart ? presumptiveEnd : presumptiveStart;
+	
+				var calculateDateIterator = function(startDate, endDate) {
+					//Year in miliseconds = 3.154e10.
+					timePeriod = (endDate - startDate) / 3.154e10;
+	
+					if (timePeriod < 10) {
+						dateIterator = 30;
+					} else if (10 <= timePeriod && timePeriod < 50) {
+						dateIterator = 90;
+					} else if (50 <= timePeriod && timePeriod < 100) {
+						dateIterator = 180;
+					} else if (100 <= timePeriod) {
+						dateIterator = 360; 
+					}
+				};
+	
+				calculateDateIterator(startDate, endDate);
+	
+				//Make keywordObject empty in case it isn't already is. 
+				keywordObject = {};
+	
+				firstApiUrl = processNewSearchTerm(searchTerm, startDate, endDate);
+				makeCall();
+			}
 		}
 	};
 
