@@ -1,13 +1,3 @@
-/*
-TO DO:
--add other related keywords to master keyword object?
--what about keywords prior to 2006?
-BUGS:
--obama was iterating over 'persons' category...
-
-*/
-
-
 window.onload = function() {
 
 	//Master keyword object for all keyword information. 
@@ -34,20 +24,67 @@ window.onload = function() {
 	//Container to start initiating calls. 
 	var firstApiUrl = {};
 
+	//Calculated depending on the time between the start date and end date of the query. 
+	var dateIterator, timePeriod;
+
+	//Converst from the New York Times date format to Javascript date format.
+	var convertToJsDate = function(nyTimesDate) {
+		var year = nyTimesDate.substring(0,4);
+		var month = nyTimesDate.substring(4,6) - 1;
+		var day = nyTimesDate.substring(6,8);
+		return new Date(year, month, day);
+	};
+
+	//Converts the Javascript date format the New York Times format. 
+	var convertToNyDate = function(javscriptDate) {
+		var year = String(javscriptDate.getFullYear());
+		var month = String(javscriptDate.getMonth() + 1);
+		if (month.length !== 2) {
+			month = '0' + month;
+		}
+		var day = String(javscriptDate.getDate());
+		if (day.length !== 2) {
+			day = '0' + day;
+		}
+		return year + month + day; 
+	};
+
 	//Log new search query and call next function.
-	var submit = document.getElementById('submitQuery');
-	submit.onclick = function() {
+	document.onkeydown = function(e) {
+		if (e.keyCode === 13) {
+
 			var searchTerm = document.getElementById('search_term').value;
-			var startDate = document.getElementById('startDate').value;
-			var endDate = document.getElementById('endDate').value;
-			//Assuming we are entering dates in NY format
-			//FIXME: need to catch empty values and return to user alerts
+			
+			//A double-check in the event that the start/endDateElements are switched. 
+			var presumptiveStart = new Date(timeObject[startDateElement]);
+			var presumptiveEnd = new Date(timeObject[endDateElement]);
+
+			var startDate = presumptiveStart < presumptiveEnd ? presumptiveStart : presumptiveEnd;
+			var endDate = presumptiveEnd > presumptiveStart ? presumptiveEnd : presumptiveStart;
+
+			var calculateDateIterator = function(startDate, endDate) {
+				//Year in miliseconds = 3.154e10.
+				timePeriod = (endDate - startDate) / 3.154e10;
+
+				if (timePeriod < 10) {
+					dateIterator = 30;
+				} else if (10 <= timePeriod && timePeriod < 50) {
+					dateIterator = 90;
+				} else if (50 <= timePeriod && timePeriod < 100) {
+					dateIterator = 180;
+				} else if (100 <= timePeriod) {
+					dateIterator = 360; 
+				}
+			};
+
+			calculateDateIterator(startDate, endDate);
 
 			//Make keywordObject empty in case it isn't already is. 
 			keywordObject = {};
 
 			firstApiUrl = processNewSearchTerm(searchTerm, startDate, endDate);
 			makeCall();
+		}
 	};
 
 	//Clears HTML elements so new search can be implemented. 
@@ -60,55 +97,27 @@ window.onload = function() {
 
 	//Process search query and the build URL for the API calls. 
 	var processNewSearchTerm = function(searchTerm, startDate, endDate) {
-
 		//Clean up of any existing HTML elements from last search. 
 		removeChildren('keywordBubble'); //definitely need to rename
 		removeChildren('links');
-		
-		//Assuming we are taking a NYTimes formatted date.
-		var convertToJsDate = function(nyTimesDate) {
-			var year = nyTimesDate.substring(0,4);
-			var month = nyTimesDate.substring(4,6) - 1;
-			var day = nyTimesDate.substring(6,8);
-			return new Date(year, month, day);
-		};
-
-		//Converts the date the New York Times format. 
-		var convertToNyDate = function(javscriptDate) {
-			var year = String(javscriptDate.getFullYear());
-			var month = String(javscriptDate.getMonth() + 1);
-			if (month.length !== 2) {
-				month = '0' + month;
-			}
-			var day = String(javscriptDate.getDate());
-			if (day.length !== 2) {
-				day = '0' + day;
-			}
-			return year + month + day; 
-		};
 
 		//Checks to see if arguments are currently in Javascript format.
 		if (typeof(startDate) === "object" || typeof(endDate) === "object") {
 			var startDate_nytimes = convertToNyDate(startDate);
 			var endDate_nytimes = convertToNyDate(endDate);
-		}
-		else {
+		} else {
 			var startDate_nytimes = startDate;
 			var endDate_nytimes = endDate;
 		}
 
 		//Checks to see if the arguments are currently in New York Times format. 
 		if (typeof(startDate) === "string" || typeof(endDate) === "string") {
-			
 			var startDate_js = convertToJsDate(startDate);
 			var endDate_js = convertToJsDate(endDate);
-		}
-		else {
+		} else {
 			var startDate_js = startDate;
 			var endDate_js = endDate;
 		}
-
-		//FIXME: Reformat date inputs in accordance with NY Times API, i.e. "YYYYMMDD"
 
 		//Begins building URL to be used in API call
 		var url = 'https://api.nytimes.com/svc/search/v2/articlesearch.json';
@@ -118,8 +127,6 @@ window.onload = function() {
 		url += '&' + 'q' + '=' + searchTerm;
 		url += '&' + 'begin_date' + '=' + startDate_nytimes;
 		url += '&' + 'end_date' + '=' + endDate_nytimes;
-
-		
 
 		return {url: url, startDate_js: startDate_js, endDate_js: endDate_js, searchTerm: searchTerm};
 	};
@@ -132,6 +139,7 @@ window.onload = function() {
 
 		//Saves meta data regarding search query. 
 		var metaDataObject = jsonObject.response.meta;
+
 		/*
 		{meta: 
 			{
@@ -143,7 +151,7 @@ window.onload = function() {
 		*/
 
 		//Calculates relevance score for each keyword within each article
-		var calculateScore = function(keywordObject) {
+		var calculateScore = function(nytKeywordObject) {
 			/*
 			If keyword is marked 'major' then +5
 			If keyword is NOT marked 'major' then -5
@@ -157,9 +165,17 @@ window.onload = function() {
 			*/
 			var rankScores = {'1': 8, '2': 7, '3': 6, '4': 5, '5': 4, "6+": 0};
 			var score = 0;
-			score += keywordObject.is_major === 'Y' ? 5 : -5;
-			if (keywordObject.rank < 6) {
-				score += rankScores[keywordObject.rank]
+
+			//The New York Times didn't really start giving their keywords attributes (i.e. 'is_major' and 'rank') until 2006, 
+			//so this conditional accounts for cases where those attributes don't exist, giving the keyword a positive score
+			//for simply being included in the list. 
+			if (nytKeywordObject.is_major === undefined || nytKeywordObject.rank === undefined) {
+				score += 8;
+			} else {
+				score += nytKeywordObject.is_major === 'Y' ? 5 : -5;
+				if (nytKeywordObject.rank < 6) {
+					score += rankScores[nytKeywordObject.rank]
+				}
 			}
 			return score; 
 		};
@@ -184,35 +200,40 @@ window.onload = function() {
 
 				if (keywordObject.hasOwnProperty(keyword.value)) {
 
-					// //Checks to see if the pre-existing category differs from the current one
-					// if (keywordObject[keyword.value].category !== keyword.name) {
-					// 	keywordObject[keyword.value].category = keywordObject[keyword.value].category + ' & ' + keyword.name;
-					// }
-
 					//Adds another instance of the keyword.
 					keywordObject[keyword.value].instances += 1;
 
-					//Adds relevanceScore to pre-existing score. 
+					//Adds relevanceScore to pre-existing score.
 					keywordObject[keyword.value].relevanceScore += relevanceScore;
 
-					//Adds article information to pre-existing array.
-					keywordObject[keyword.value].relatedArticles.push(
-							{
-							title: article.headline.main,
-							abstract: article.abstract,
-							url: article.web_url,
-							individualRelevanceScore: relevanceScore,
-							}
-					);
+					//Conditional accounts for times when a multiple instances of a keyword shows up in a related article. 
+					//I believe it's an error on the NYTimes side.
+					var articleDuplicate = false; 
+					keywordObject[keyword.value].relatedArticles.forEach(function(articleCheck) {
+						articleDuplicate = (articleCheck.title === article.headline.main);
+					});
 
-				}
-				else {
+					if (!articleDuplicate) {
+						//Adds article information to pre-existing array.
+						keywordObject[keyword.value].relatedArticles.push(
+								{
+								title: article.headline.main,
+								publicationDate: article.pub_date,
+								abstract: article.abstract,
+								url: article.web_url,
+								individualRelevanceScore: relevanceScore,
+								}
+						);
+					}
+
+				} else {
 					keywordObject[keyword.value] = {
 						category: keyword.name,
 						instances: 1,
 						relevanceScore: relevanceScore,
 						relatedArticles: [{
 							title: article.headline.main,
+							publicationDate: article.pub_date,
 							abstract: article.abstract,
 							url: article.web_url,
 							individualRelevanceScore: relevanceScore,
@@ -224,35 +245,6 @@ window.onload = function() {
 			})
 		});		
 	};
-
-	// //Adds 'click' eventListener to each keyword bubble.
-	// var bubbleClick = document.getElementById("keywordBubble").addEventListener('click', openLinks, false);
-
-	// var openLinks = function(e) {
-	// 	if (e.target !== e.currentTarget){
-	// 		var clickedItem = e.target.id
-	// 		relatedArticles(clickedItem)
-	// 	}
-	// 	e.stopPropagation();
-	// };
-
-	// 	//Lists out related articles to each keyword.
-	// var relatedArticles = function(keyword) {
-	// 	removeChildren('links');
-	// 	var list = document.getElementById('links')
-	// 	keywordObject[keyword].relatedArticles.forEach(function(article) {
-	// 		var articleRef = document.createElement('li');
-	// 		articleRef.innerHTML = "<a href=" + article.url + ">" + article.title + "</a>";
-	// 		// var abstractList = document.createElement('ul');
-	// 		// var abstractItem = document.createElement('li');
-
-	// 		// var nullCase = "<i>No abstract available</i>"
-	// 		// abstractItem.innerHTML = "<strong>Abstract: </strong>" + (article.abstract !== null ? article.abstract : nullCase);
-	// 		// abstractList.appendChild(abstractItem);
-	// 		// articleRef.appendChild(abstractList);
-	// 		list.appendChild(articleRef);
-	// 	});	
-	// };
 
 	var refreshPage = function() {
 
@@ -280,7 +272,8 @@ window.onload = function() {
 			relatedArticles: [
 				{
 				title: 'article title', 
-				Abstract: 'abstract', 
+				publicationDate: 'YYYY-MM-DDT00:00:00Z'
+				abstract: 'abstract', 
 				url: url, 
 				individualRelevanceScore: #,
 				},
@@ -289,6 +282,30 @@ window.onload = function() {
 			... 
 		]
 		*/
+
+		//Reformats 'publicationDate.' 'publicationDate' argument should be formatted as 'YYYY-MM-DDT00:00:00Z'.
+		var editDate = function(publicationDate) {
+			//Month numbers in Javascript format. 
+			var month = new Array();
+			month[0] = "January";
+			month[1] = "February";
+			month[2] = "March";
+			month[3] = "April";
+			month[4] = "May";
+			month[5] = "June";
+			month[6] = "July";
+			month[7] = "August";
+			month[8] = "September";
+			month[9] = "October";
+			month[10] = "November";
+			month[11] = "December";
+
+			var year = publicationDate.substring(0,4);
+			var monthNum = publicationDate.substring(5,7);
+			var day = publicationDate.substring(8,10);
+			
+			return month[monthNum-1] + " " + day + ", " + year;
+		};
 
 		Object.keys(keywordObject).forEach(function(keyword) {
 
@@ -299,8 +316,12 @@ window.onload = function() {
 				keywordDiv.className = 'floatingKeyword';
 				keywordDiv.id = keyword;
 
-				keywordDiv.style.width = String(keywordObject[keyword].instances*10 + 125) + 'px';
-				keywordDiv.style.height = String(keywordObject[keyword].instances*10 + 100) + 'px';
+				//Determine size of the keyword div according to the number of instances it appears. Cut-off size at 350x250 px. 
+				var width = keywordObject[keyword].instances*10 + 125;
+				var height = keywordObject[keyword].instances*10 + 100;
+				keywordDiv.style.width = width > 350 ? 350 + 'px' : width + 'px';
+				keywordDiv.style.height = height > 250 ? 250 + 'px' : height + 'px';
+
 				//add color to div according to score
 				keywordDiv.style.backgroundColor = colorAssignor(keywordObject[keyword].relevanceScore);
 
@@ -330,7 +351,8 @@ window.onload = function() {
 						relevanceScore: #, 
 						relatedArticles: [
 							{
-							title: 'article title', 
+							title: 'article title',
+							publicationDate: 'YYYY-MM-DDT00:00:00Z' 
 							Abstract: 'abstract', 
 							url: url, 
 							individualRelevanceScore: #,
@@ -345,9 +367,33 @@ window.onload = function() {
 					var articleList = document.getElementById('links');
 
 					keywordObject[keyword].relatedArticles.forEach(function(article) {
-						//Add title 
-						var articleEntry = document.createElement('li');
-						articleEntry.innerHTML = '<a href=' + article.url + '>' + article.title + '</a>'; 
+						//Create table to contain each unique article elements.
+						var articleEntry = document.createElement('table');
+						articleEntry.className = 'articleTables';
+
+						//Add title of article with embedded link. 
+						var articleTitle = document.createElement('li');
+						var tableHeader = document.createElement('th');
+						articleTitle.innerHTML = '<a href=' + article.url + '>' + article.title + '</a>'; 
+						tableHeader.appendChild(articleTitle);
+						articleEntry.appendChild(tableHeader);
+
+						//Add publication date. 
+						var pubdateRow = document.createElement('tr');
+						var articlePubdate = document.createElement('td');
+						articlePubdate.innerHTML = "<strong>Publication date: </strong>" + editDate(article.publicationDate);
+						pubdateRow.appendChild(articlePubdate);
+						articleEntry.appendChild(pubdateRow);
+
+						//Add abstract row. 
+						var abstractRow = document.createElement('tr');
+						var articleAbstract = document.createElement('td');
+						var nullCase = "<i>No abstract available</i>"
+						articleAbstract.innerHTML = "<strong>Abstract: </strong>" + (article.abstract !== null ? article.abstract : nullCase);
+						abstractRow.appendChild(articleAbstract);
+						articleEntry.appendChild(abstractRow);
+
+						//Add the whole table to the articleList div. 
 						articleList.appendChild(articleEntry);
 					});
 				};
@@ -368,7 +414,7 @@ window.onload = function() {
           var newJson = JSON.parse(xhr.responseText);
           addToKeywordObject(newJson);
 
-          //Console info. 
+          //Console live API information. 
           console.log(keywordObject);
           counter += 1;
           console.log("NUMBER OF CALLS: ", counter);
@@ -384,20 +430,30 @@ window.onload = function() {
     //Callback function as specified as a parameter in 'loadNewPage' function to be passed to make successive API calls.
     var makeRequests = function(apiObject) {
     	
-    	//Base Case
+    	//Base Case.
 		if (apiObject.startDate_js >= apiObject.endDate_js) {
 			console.log("FINISHED");
+			removeChildren('loadingElement')
 			refreshPage();
+			console.log(apiObject);
 			return;
 		}
 
 		//Call new API recursively. 
 		loadNewPage(apiObject, function() {
+
+			//Adds dynamic loading text for user convenience. 
+			removeChildren('loadingElement');
+			var load = document.getElementById('loadingElement');
+			load.innerHTML = 'Loading ' + apiObject.startDate_js.getFullYear();
+
 			var newApiObject = apiObject;
 
-			//Add 30 days to start date.
 			var newStartDate_js = newApiObject.startDate_js;
-			newStartDate_js.setDate(newStartDate_js.getDate() + 30);
+			
+			//Dateiterator already determined by date range input.
+			newStartDate_js.setDate(newStartDate_js.getDate() + dateIterator);
+
 			newApiObject.startDate_js = newStartDate_js;
 
 			newApiObject = processNewSearchTerm(newApiObject.searchTerm, newStartDate_js, newApiObject.endDate_js)
@@ -414,13 +470,15 @@ window.onload = function() {
     };
 
     /*
+    FOR REFERENCE: 
     firstApiUrl = {url: url, startDate: startDate_js, endDate: endDate_js, searchTerm: searchTerm};
     */
 
+     //Moving data parameters. 
 	var selected = null, // Object of the element to be moved
 	    x_pos = 0, // Stores x oordinates of the mouse pointer
 	    x_elem = 0,// Stores eft values (edge) of the element
-	    x_max = 575,
+	    x_max = 600,
 	    x_min = 0,
 	    x_temp;
 
@@ -428,40 +486,34 @@ window.onload = function() {
 	var drag = function(elem) {
 	    // Store the object of the element which needs to be moved
 	    selected = elem; //return the divId you just clicked on
-	    x_elem = selected.offsetLeft; // selected.offsetLEft returns position of the div you clicked, x_pos is not 0, result negative?
-	    
-
 	};
 
 	// Will be called when user dragging an element
-	//'e' is the event, the function associated with the event handler receives itself as an argument 
 	var moveElement = function(e) {
-	    x_pos = document.all ? window.event.clientX : e.pageX; //x_pos reassigned to the position of the cursor 
-	    timeElement1 = document.getElementById('draggable-element1').offsetLeft;
-	    timeElement2 = document.getElementById('draggable-element2').offsetLeft;
-	    //console.log(timeElement1)
+		startDateElement = document.getElementById('startDateElement').offsetLeft;
+	    endDateElement = document.getElementById('endDateElement').offsetLeft;
+
+	    x_pos = document.all ? window.event.clientX : e.pageX; 
+
 	    if (selected !== null) {
 	    	var currentElement = selected.id;
-	    	x_temp = x_pos - x_elem;
-	    	//console.log('x_temp is ', x_temp)
-	    	// if (currentElement = 'draggable-element1') {
-	    	// 	x_max = x_max > timeElement2 ? x_max : timeElement2;
-	    	// }
-	    	if (currentElement === 'draggable-element1') {
-		    	if (x_temp > x_max || x_temp > timeElement2) {
-		    		x_temp = x_max > timeElement2 ? x_max : timeElement2;
-		    	} else if (x_temp < x_min) {
-		    		x_temp = x_min; 
-		    	}
-		    } else if (currentElement === 'draggable-element2') {
-		    	if (x_temp > x_max) {
-		    		x_temp = x_max;
-		    	} else if (x_temp < x_min || x_temp < timeElement2) {
-		    		x_temp = x_min > timeElement1 ? x_min : timeElement1; 
-		    	}
-		    }
-	        selected.style.left = x_temp + 'px';
+	    	x_temp = x_pos; 
 
+	    	if (currentElement === 'endDateElement') {
+	    		x_temp = x_pos - 250;
+	    	} else if (currentElement === 'startDateElement') {
+	    		x_temp = x_pos - 210;
+	    	}
+		//Clean up. 	
+		removeChildren('start');
+		removeChildren('end');
+
+		startD.innerHTML = (new Date(timeObject[startDateElement])).getFullYear();
+		endD.innerHTML = (new Date(timeObject[endDateElement])).getFullYear();
+
+		start.appendChild(startD);
+		end.appendChild(endD);
+	        selected.style.left = x_temp + 'px';
 	    }
 	};
 
@@ -470,21 +522,57 @@ window.onload = function() {
 	    selected = null;
 	};
 
-	var timeElement1 = document.getElementById('draggable-element1').offsetLeft;
-	console.log(timeElement1)
-	document.getElementById('draggable-element1').onmousedown = function () {
+	var startDateElement = document.getElementById('startDateElement').offsetLeft;
+	document.getElementById('startDateElement').onmousedown = function (e) {
+		console.log(document.activeElement);
 	    drag(this);
 	    return false;
 	};
 
-	var timeElement2 = document.getElementById('draggable-element2').offsetLeft;
-	document.getElementById('draggable-element2').onmousedown = function () {
+	var endDateElement = document.getElementById('endDateElement').offsetLeft;
+	document.getElementById('endDateElement').onmousedown = function () {
+		console.log(document.activeElement);
+		//add consoles for 
 	    drag(this);
 	    return false;
 	};
 
 	document.onmousemove = moveElement;
 	document.onmouseup = deSelect;
+
+	//50-920 --- Sept 18, 1851 - Present (2016) 165 years 
+	//165 years
+	//year in miliseconds 3.154e10
+	var today = new Date();
+	var startDate = new Date(1851, 8, 18);
+
+	var pixelRangeStart = 50;
+	var pixelRangeEnd = 920;
+
+	//Number of miliseconds per pixel. 
+	var miliPerPixel = (today - startDate) / 870;
+
+	var timeObject = {};
+
+	for (var propPixels = pixelRangeStart, dateIterator = startDate.getTime(); propPixels < pixelRangeEnd;) {
+		timeObject[propPixels] = dateIterator; 
+		dateIterator += miliPerPixel;
+		propPixels += 1;
+	}
+
+	//Adds the first start/end dates to the parameters. 
+	var start = document.getElementById('start');
+
+    var startD = document.createElement('div');
+    startD.innerHTML = (new Date(timeObject[startDateElement])).getFullYear();
+
+    var end = document.getElementById('end');
+
+    var endD = document.createElement('div');
+    endD.innerHTML = (new Date(timeObject[endDateElement])).getFullYear();
+
+    start.appendChild(startD);
+    end.appendChild(endD);
 
 };
 
