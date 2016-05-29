@@ -1,5 +1,5 @@
 window.onload = function() {
-
+	'use strict';
 	//Master keyword object for all keyword information. 
 	var keywordObject = {};
 	/*
@@ -53,6 +53,9 @@ window.onload = function() {
 	document.onkeydown = function(e) {
 	
 		if (e.keyCode === 13) {
+			//Prevent 'Enter' key from automatically reloading the page if the cursor is in the input field. 
+			e.preventDefault();
+			
 			if (document.getElementById('search_term').value === '') {
 				alert("You didn't enter in a search query!");
 			} else {
@@ -70,14 +73,16 @@ window.onload = function() {
 					//Year in miliseconds = 3.154e10.
 					timePeriod = (endDate - startDate) / 3.154e10;
 	
-					if (timePeriod < 10) {
+					if (timePeriod < 5) {
 						dateIterator = 30;
+					} else if (timePeriod <= 5 && timePeriod < 10) {
+						dateIterator= 90;
 					} else if (10 <= timePeriod && timePeriod < 50) {
-						dateIterator = 90;
-					} else if (50 <= timePeriod && timePeriod < 100) {
 						dateIterator = 180;
+					} else if (50 <= timePeriod && timePeriod < 100) {
+						dateIterator = 360;
 					} else if (100 <= timePeriod) {
-						dateIterator = 360; 
+						dateIterator = 720; 
 					}
 				};
 	
@@ -505,9 +510,9 @@ window.onload = function() {
 	    	x_temp = x_pos; 
 
 	    	if (currentElement === 'endDateElement') {
-	    		x_temp = x_pos - 250;
+	    		x_temp = x_pos - 275;
 	    	} else if (currentElement === 'startDateElement') {
-	    		x_temp = x_pos - 210;
+	    		x_temp = x_pos - 275;
 	    	}
 		//Clean up. 	
 		removeChildren('start');
