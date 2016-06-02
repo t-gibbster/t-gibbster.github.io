@@ -299,34 +299,6 @@ window.onload = function() {
 		});		
 	};
 
-	// //Adds 'click' eventListener to each keyword bubble.
-	// var bubbleClick = document.getElementById("keywordBubble").addEventListener('click', openLinks, false);
-
-	// var openLinks = function(e) {
-	// 	if (e.target !== e.currentTarget){
-	// 		var clickedItem = e.target.id
-	// 		relatedArticles(clickedItem)
-	// 	}
-	// 	e.stopPropagation();
-	// };
-
-	// 	//Lists out related articles to each keyword.
-	// var relatedArticles = function(keyword) {
-	// 	removeChildren('links');
-	// 	var list = document.getElementById('links')
-	// 	keywordObject[keyword].relatedArticles.forEach(function(article) {
-	// 		var articleRef = document.createElement('li');
-	// 		articleRef.innerHTML = "<a href=" + article.url + ">" + article.title + "</a>";
-	// 		// var abstractList = document.createElement('ul');
-	// 		// var abstractItem = document.createElement('li');
-
-	// 		// var nullCase = "<i>No abstract available</i>"
-	// 		// abstractItem.innerHTML = "<strong>Abstract: </strong>" + (article.abstract !== null ? article.abstract : nullCase);
-	// 		// abstractList.appendChild(abstractItem);
-	// 		// articleRef.appendChild(abstractList);
-	// 		list.appendChild(articleRef);
-	// 	});	
-	// };
 
 	var refreshPage = function() {
 
@@ -599,28 +571,13 @@ window.onload = function() {
 	    			x_temp = pixelRangeEnd;
 	    			console.log('x_temp is ', x_temp)
 	    		}
-	    		// if (x_temp > (x_max - 450)) {
-		    	// 	x_temp = x_max - 400;
-		    	// } else if (x_temp < (x_min - 450)) {
-		    	// 	x_temp = x_min - 450; 
-		    	// }
+	    	
 	    	} else if (currentElement === 'startDateElement') {
 	    		x_temp = x_pos - 50;
 	    		if (x_temp < pixelRangeStart) {
 	    			x_temp = pixelRangeStart; }
 	    	}
-		    // 	if (x_temp > timeElement2) {
-		    // 		x_temp = timeElement2;
-		    // 	} else if (x_temp < x_min) {
-		    // 		x_temp = x_min; 
-		    // 	}
-		    // } else if (currentElement === 'draggable-element2') {
-		    // 	if (x_temp > x_max) {
-		    // 		x_temp = x_max;
-		    // 	} else if (x_temp < timeElement1) {
-		    // 		x_temp = timeElement1; 
-		    // 	}
-		    // }
+		    
 
 		    removeChildren('start');
 		    removeChildren('end');
@@ -670,9 +627,6 @@ window.onload = function() {
 
 	var pixelRangeStart = 117;
 	var pixelRangeEnd = 870;
-
-	//represents the number of pixels for each milisecond 
-	//var pixelsPerMili = 850 / (today - startDate);
 
 	//Number of miliseconds per pixel. 
 	var miliPerPixel = (today - startDate) / (pixelRangeEnd - pixelRangeStart);
