@@ -1,5 +1,7 @@
 window.onload = function() {
-	'use strict';
+
+'use strict';
+
 	//Master keyword object for all keyword information. 
 	var keywordObject = {};
 	/*
@@ -49,48 +51,84 @@ window.onload = function() {
 		return year + month + day; 
 	};
 
+	//Array for outputting months based on Javascript month number.
+	var monthArray = [];
+	monthArray[0] = "January";
+	monthArray[1] = "February";
+	monthArray[2] = "March";
+	monthArray[3] = "April";
+	monthArray[4] = "May";
+	monthArray[5] = "June";
+	monthArray[6] = "July";
+	monthArray[7] = "August";
+	monthArray[8] = "September";
+	monthArray[9] = "October";
+	monthArray[10] = "November";
+	monthArray[11] = "December";
+
 	//Log new search query and call next function.
 	document.onkeydown = function(e) {
-	
-		if (e.keyCode === 13) {
-			//Prevent 'Enter' key from automatically reloading the page if the cursor is in the input field. 
+		//debugger
+		
+		var keycode; 
+
+		if (window.event) {
+			keycode = window.event.keyCode; 
+		} else if (e) { 
+			keycode = e.which; 
+		} else {
+			return true; 
+		}
+
+		if (keycode === 13) {
+
 			e.preventDefault();
-			
-			if (document.getElementById('search_term').value === '') {
-				alert("You didn't enter in a search query!");
+
+			if (document.getElementById('search_term').value === ''){
+				alert("You need to enter in a search query")
 			} else {
-	
 				var searchTerm = document.getElementById('search_term').value;
 				
-				//A double-check in the event that the start/endDateElements are switched. 
+				//Assuming we are entering dates in NY format
+				//FIXME: need to catch empty values and return to user alerts
+
+				//Check in the event that the start/endDateElements are switched. 
+				//FIXME: Also check in the event of the same year 
 				var presumptiveStart = new Date(timeObject[startDateElement]);
 				var presumptiveEnd = new Date(timeObject[endDateElement]);
-	
+
 				var startDate = presumptiveStart < presumptiveEnd ? presumptiveStart : presumptiveEnd;
 				var endDate = presumptiveEnd > presumptiveStart ? presumptiveEnd : presumptiveStart;
-	
+
+				
+
 				var calculateDateIterator = function(startDate, endDate) {
 					//Year in miliseconds = 3.154e10.
 					timePeriod = (endDate - startDate) / 3.154e10;
-	
-					if (timePeriod < 5) {
-						dateIterator = 30;
-					} else if (timePeriod <= 5 && timePeriod < 10) {
-						dateIterator= 90;
+
+					if (timePeriod < 10) {
+						dateIterator = 360;
 					} else if (10 <= timePeriod && timePeriod < 50) {
-						dateIterator = 180;
+						dateIterator = 360;
 					} else if (50 <= timePeriod && timePeriod < 100) {
 						dateIterator = 360;
 					} else if (100 <= timePeriod) {
-						dateIterator = 720; 
+						dateIterator = 360; 
 					}
+
 				};
-	
+
 				calculateDateIterator(startDate, endDate);
-	
+
+				console.log(timePeriod, dateIterator)
+
+				console.log('startdate is ', startDate);
+				console.log('end date is ', endDate);
+				
+
 				//Make keywordObject empty in case it isn't already is. 
 				keywordObject = {};
-	
+
 				firstApiUrl = processNewSearchTerm(searchTerm, startDate, endDate);
 				makeCall();
 			}
@@ -129,6 +167,8 @@ window.onload = function() {
 			var endDate_js = endDate;
 		}
 
+		//FIXME: Reformat date inputs in accordance with NY Times API, i.e. "YYYYMMDD"
+
 		//Begins building URL to be used in API call
 		var url = 'https://api.nytimes.com/svc/search/v2/articlesearch.json';
 		//Adds API key.
@@ -137,6 +177,8 @@ window.onload = function() {
 		url += '&' + 'q' + '=' + searchTerm;
 		url += '&' + 'begin_date' + '=' + startDate_nytimes;
 		url += '&' + 'end_date' + '=' + endDate_nytimes;
+
+		
 
 		return {url: url, startDate_js: startDate_js, endDate_js: endDate_js, searchTerm: searchTerm};
 	};
@@ -187,6 +229,7 @@ window.onload = function() {
 					score += rankScores[nytKeywordObject.rank]
 				}
 			}
+
 			return score; 
 		};
 
@@ -256,6 +299,35 @@ window.onload = function() {
 		});		
 	};
 
+	// //Adds 'click' eventListener to each keyword bubble.
+	// var bubbleClick = document.getElementById("keywordBubble").addEventListener('click', openLinks, false);
+
+	// var openLinks = function(e) {
+	// 	if (e.target !== e.currentTarget){
+	// 		var clickedItem = e.target.id
+	// 		relatedArticles(clickedItem)
+	// 	}
+	// 	e.stopPropagation();
+	// };
+
+	// 	//Lists out related articles to each keyword.
+	// var relatedArticles = function(keyword) {
+	// 	removeChildren('links');
+	// 	var list = document.getElementById('links')
+	// 	keywordObject[keyword].relatedArticles.forEach(function(article) {
+	// 		var articleRef = document.createElement('li');
+	// 		articleRef.innerHTML = "<a href=" + article.url + ">" + article.title + "</a>";
+	// 		// var abstractList = document.createElement('ul');
+	// 		// var abstractItem = document.createElement('li');
+
+	// 		// var nullCase = "<i>No abstract available</i>"
+	// 		// abstractItem.innerHTML = "<strong>Abstract: </strong>" + (article.abstract !== null ? article.abstract : nullCase);
+	// 		// abstractList.appendChild(abstractItem);
+	// 		// articleRef.appendChild(abstractList);
+	// 		list.appendChild(articleRef);
+	// 	});	
+	// };
+
 	var refreshPage = function() {
 
 		// colorAssignor takes the score for each particular keyword and assigns it a color
@@ -295,26 +367,27 @@ window.onload = function() {
 
 		//Reformats 'publicationDate.' 'publicationDate' argument should be formatted as 'YYYY-MM-DDT00:00:00Z'.
 		var editDate = function(publicationDate) {
+
 			//Month numbers in Javascript format. 
-			var month = new Array();
-			month[0] = "January";
-			month[1] = "February";
-			month[2] = "March";
-			month[3] = "April";
-			month[4] = "May";
-			month[5] = "June";
-			month[6] = "July";
-			month[7] = "August";
-			month[8] = "September";
-			month[9] = "October";
-			month[10] = "November";
-			month[11] = "December";
+			var monthArray = [];
+			monthArray[0] = "January";
+			monthArray[1] = "February";
+			monthArray[2] = "March";
+			monthArray[3] = "April";
+			monthArray[4] = "May";
+			monthArray[5] = "June";
+			monthArray[6] = "July";
+			monthArray[7] = "August";
+			monthArray[8] = "September";
+			monthArray[9] = "October";
+			monthArray[10] = "November";
+			monthArray[11] = "December";
 
 			var year = publicationDate.substring(0,4);
 			var monthNum = publicationDate.substring(5,7);
 			var day = publicationDate.substring(8,10);
 			
-			return month[monthNum-1] + " " + day + ", " + year;
+			return monthArray[monthNum-1] + " " + day + ", " + year;
 		};
 
 		Object.keys(keywordObject).forEach(function(keyword) {
@@ -350,6 +423,7 @@ window.onload = function() {
 				keywordBlock.onclick = function() {
 					//Cleanup any prexisting article list. 
 					removeChildren('links');
+					debugger;
 					
 					/*
 					For reference: 
@@ -424,7 +498,7 @@ window.onload = function() {
           var newJson = JSON.parse(xhr.responseText);
           addToKeywordObject(newJson);
 
-          //Console live API information. 
+          //Console info. 
           console.log(keywordObject);
           counter += 1;
           console.log("NUMBER OF CALLS: ", counter);
@@ -455,13 +529,16 @@ window.onload = function() {
 			//Adds dynamic loading text for user convenience. 
 			removeChildren('loadingElement');
 			var load = document.getElementById('loadingElement');
-			load.innerHTML = 'Loading ' + apiObject.startDate_js.getFullYear();
+			load.innerHTML = 'Loading ' + monthArray[apiObject.startDate_js.getMonth() + 1]
+			+ ' ' + apiObject.startDate_js.getFullYear();
 
 			var newApiObject = apiObject;
 
+			//Add 30 days to start date.
 			var newStartDate_js = newApiObject.startDate_js;
-			
-			//Dateiterator already determined by date range input.
+
+			//passed in -- JS dates, and it's going to be changed every time. 
+			//FIX ME: If date parameters are very large apart, need to increase days 
 			newStartDate_js.setDate(newStartDate_js.getDate() + dateIterator);
 
 			newApiObject.startDate_js = newStartDate_js;
@@ -484,7 +561,10 @@ window.onload = function() {
     firstApiUrl = {url: url, startDate: startDate_js, endDate: endDate_js, searchTerm: searchTerm};
     */
 
-     //Moving data parameters. 
+
+
+//move to the top eventually 
+
 	var selected = null, // Object of the element to be moved
 	    x_pos = 0, // Stores x oordinates of the mouse pointer
 	    x_elem = 0,// Stores eft values (edge) of the element
@@ -496,39 +576,71 @@ window.onload = function() {
 	var drag = function(elem) {
 	    // Store the object of the element which needs to be moved
 	    selected = elem; //return the divId you just clicked on
+	    //x_elem = x_pos; // selected.offsetLEft returns position of the div you clicked, x_pos is not 0, result negative?
 	};
 
 	// Will be called when user dragging an element
+	//'e' is the event, the function associated with the event handler receives itself as an argument 
 	var moveElement = function(e) {
 		startDateElement = document.getElementById('startDateElement').offsetLeft;
 	    endDateElement = document.getElementById('endDateElement').offsetLeft;
 
-	    x_pos = document.all ? window.event.clientX : e.pageX; 
-
+	    x_pos = document.all ? window.event.clientX : e.pageX; //x_pos reassigned to the position of the cursor 
+	    console.log(x_pos);
+	    
+	    //console.log(timeElement1)
 	    if (selected !== null) {
 	    	var currentElement = selected.id;
 	    	x_temp = x_pos; 
-
+	    	//console.log('x_temp is ', x_temp)
 	    	if (currentElement === 'endDateElement') {
-	    		x_temp = x_pos - 275;
+	    		x_temp = x_pos - 400;
+	    		if (x_temp > pixelRangeEnd) {
+	    			x_temp = pixelRangeEnd;
+	    			console.log('x_temp is ', x_temp)
+	    		}
+	    		// if (x_temp > (x_max - 450)) {
+		    	// 	x_temp = x_max - 400;
+		    	// } else if (x_temp < (x_min - 450)) {
+		    	// 	x_temp = x_min - 450; 
+		    	// }
 	    	} else if (currentElement === 'startDateElement') {
-	    		x_temp = x_pos - 275;
+	    		x_temp = x_pos - 50;
+	    		if (x_temp < pixelRangeStart) {
+	    			x_temp = pixelRangeStart; }
 	    	}
-		//Clean up. 	
-		removeChildren('start');
-		removeChildren('end');
+		    // 	if (x_temp > timeElement2) {
+		    // 		x_temp = timeElement2;
+		    // 	} else if (x_temp < x_min) {
+		    // 		x_temp = x_min; 
+		    // 	}
+		    // } else if (currentElement === 'draggable-element2') {
+		    // 	if (x_temp > x_max) {
+		    // 		x_temp = x_max;
+		    // 	} else if (x_temp < timeElement1) {
+		    // 		x_temp = timeElement1; 
+		    // 	}
+		    // }
 
-		startD.innerHTML = (new Date(timeObject[startDateElement])).getFullYear();
-		endD.innerHTML = (new Date(timeObject[endDateElement])).getFullYear();
+		    removeChildren('start');
+		    removeChildren('end');
 
-		start.appendChild(startD);
-		end.appendChild(endD);
+		    startD.innerHTML = (new Date(timeObject[startDateElement])).getFullYear();
+
+		    endD.innerHTML = (new Date(timeObject[endDateElement])).getFullYear();
+
+		    start.appendChild(startD);
+		    end.appendChild(endD);
+
 	        selected.style.left = x_temp + 'px';
+
 	    }
 	};
 
 	// Destroy the object when we are done
 	var deSelect = function() {
+		console.log('1 is ' , startDateElement)
+		console.log('2 is ', endDateElement)
 	    selected = null;
 	};
 
@@ -556,11 +668,14 @@ window.onload = function() {
 	var today = new Date();
 	var startDate = new Date(1851, 8, 18);
 
-	var pixelRangeStart = 50;
-	var pixelRangeEnd = 920;
+	var pixelRangeStart = 117;
+	var pixelRangeEnd = 870;
+
+	//represents the number of pixels for each milisecond 
+	//var pixelsPerMili = 850 / (today - startDate);
 
 	//Number of miliseconds per pixel. 
-	var miliPerPixel = (today - startDate) / 870;
+	var miliPerPixel = (today - startDate) / (pixelRangeEnd - pixelRangeStart);
 
 	var timeObject = {};
 
@@ -582,8 +697,7 @@ window.onload = function() {
     endD.innerHTML = (new Date(timeObject[endDateElement])).getFullYear();
 
     start.appendChild(startD);
-    end.appendChild(endD);
-
+    end.appendChild(endD);	
 };
 
 
